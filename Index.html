@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pump.ton — The #1 Meme Coin Launchpad on TON</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+        
+        :root { --primary: #00A0E9; }
+        
+        body { font-family: 'Inter', system_ui, sans-serif; }
+        .font-display { font-family: 'Space Grotesk', 'Inter', sans-serif; font-weight: 600; }
+        
+        .ton-gradient { background: linear-gradient(135deg, #00A0E9 0%, #0066CC 100%); }
+        .pump-gradient { background: linear-gradient(135deg, #FF2D55 0%, #FF5E94 100%); }
+        
+        .neon-glow { box-shadow: 0 0 20px rgba(0, 160, 233, 0.4); }
+        .glass { background: rgba(17, 17, 24, 0.85); backdrop-filter: blur(20px); }
+        
+        .pump-card {
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .pump-card:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.4);
+        }
+        
+        .section-header { font-size: 2rem; line-height: 1.05; font-weight: 800; letter-spacing: -0.04em; }
+        
+        .bonding-bar {
+            height: 9px;
+            background: linear-gradient(to right, #00A0E9, #00F0FF);
+            border-radius: 9999px;
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.5);
+            transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .metric-value { font-variant-numeric: tabular-nums; font-feature-settings: "ss02"; }
+        
+        .modal { animation: modalPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.92) translateY(40px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        
+        .live-dot { animation: pulse-live 2s infinite; }
+        @keyframes pulse-live { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+        
+        .price-ticker { font-variant-numeric: tabular-nums; }
+        
+        .token-image { box-shadow: 0 15px 25px -8px rgb(0 0 0 / 0.4); transition: transform 0.4s ease; }
+        .pump-card:hover .token-image { transform: scale(1.08); }
+        
+        .nav-active { color: #00A0E9; font-weight: 700; position: relative; }
+        .nav-active:after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: #00A0E9; }
+        
+        .meme-text { font-weight: 800; letter-spacing: -0.05em; }
+        
+        .stat-number { transition: all 0.4s ease; }
+        
+        .mini-chart { height: 38px !important; }
+        
+        .activity-row { transition: all 0.2s ease; }
+        .activity-row:hover { background-color: rgba(255,255,255,0.03); }
+        
+        .premium-shadow { box-shadow: 0 10px 30px -15px rgb(0 160 233 / 0.3), 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+    </style>
+</head>
+<body class="bg-[#0a0a0f] text-white overflow-x-hidden">
+    <!-- TOP NAV -->
+    <nav class="bg-[#111118]/95 backdrop-blur-xl border-b border-white/10 sticky top-0 z-[90]">
+        <div class="max-w-screen-2xl mx-auto px-6">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center gap-x-3">
+                    <div class="w-10 h-10 ton-gradient rounded-2xl flex items-center justify-center neon-glow">
+                        <i class="fa-solid fa-rocket text-white text-3xl"></i>
+                    </div>
+                    <div class="flex items-baseline">
+                        <span class="font-display text-[28px] font-black tracking-[-2px]">pump</span>
+                        <span class="font-display text-[28px] font-black tracking-[-2px] ton-blue">.</span>
+                        <span class="font-display text-[28px] font-black tracking-[-2px] text-white/90">ton</span>
+                    </div>
+                </div>
+
+                <!-- Desktop Nav -->
+                <div class="hidden md:flex items-center gap-x-2 text-sm font-medium">
+                    <a href="#" onclick="showView('home')" class="nav-active px-5 py-2 rounded-2xl flex items-center gap-x-2">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Discover</span>
+                    </a>
+                    <a href="#" onclick="showLeaderboard()" class="px-5 py-2 hover:bg-white/5 rounded-2xl flex items-center gap-x-2">
+                        <i class="fa-solid fa-trophy"></i>
+                        <span>Leaderboard</span>
+                    </a>
+                    <a href="#" onclick="showCreateModal()" class="px-5 py-2 hover:bg-white/5 rounded-2xl flex items-center gap-x-2">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Launch</span>
+                    </a>
+                    <a href="#" onclick="showView('portfolio')" class="px-5 py-2 hover:bg-white/5 rounded-2xl flex items-center gap-x-2">
+                        <i class="fa-solid fa-wallet"></i>
+                        <span>Portfolio</span>
+                    </a>
+                </div>
+
+                <!-- Right side -->
+                <div class="flex items-center gap-x-3">
+                    <!-- Live Stats -->
+                    <div class="hidden lg:flex items-center bg-[#1a1a22] border border-white/10 rounded-2xl px-4 py-1.5 text-xs">
+                        <div class="flex items-center gap-x-1.5">
+                            <div class="w-2 h-2 bg-emerald-400 rounded-full live-dot"></div>
+                            <span class="font-mono text-emerald-400">12,847</span>
+                            <span class="text-white/50">online</span>
+                        </div>
+                    </div>
+
+                    <!-- Wallet -->
+                    <div id="wallet-info" class="hidden items-center gap-x-1 bg-[#1a1a22] border border-white/10 rounded-2xl pl-1 pr-4 py-1">
+                        <div onclick="showWalletModal()" class="flex items-center gap-x-3 px-3 cursor-pointer">
+                            <div class="w-8 h-8 bg-gradient-to-br from-[#00A0E9] to-[#0066CC] rounded-xl flex items-center justify-center">
+                                <i class="fa-solid fa-wallet text-white text-sm"></i>
+                            </div>
+                            <div class="leading-none">
+                                <div id="wallet-address" class="font-mono text-sm font-semibold cursor-pointer hover:text-[#00A0E9]"></div>
+                                <div id="wallet-balance" class="font-mono text-emerald-400 text-xs tabular-nums"></div>
+                            </div>
+                        </div>
+                        <button onclick="disconnectWallet()" class="px-3 py-1 text-red-400 hover:bg-red-500/10 rounded-xl text-xs">
+                            <i class="fa-solid fa-power-off"></i>
+                        </button>
+                    </div>
+                    
+                    <button id="connect-btn" onclick="showWalletModal()"
+                            class="px-6 py-2 bg-white hover:bg-white/90 active:bg-white text-black font-semibold text-sm rounded-2xl flex items-center gap-x-2 transition-all shadow-lg">
+                        <i class="fa-solid fa-plug"></i>
+                        <span>Connect</span>
+                    </button>
+
+                    <div onclick="showAchievements()" class="w-9 h-9 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-2xl cursor-pointer relative">
+                        <i class="fa-solid fa-tachometer-alt text-lg"></i>
+                        <div id="achievement-dot" class="hidden absolute -top-0.5 -right-0.5 w-3 h-3 bg-rose-500 rounded-full border border-[#0a0a0f]"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <div class="max-w-screen-2xl mx-auto px-6 pt-8 pb-6">
+        <div class="flex flex-col lg:flex-row lg:items-end gap-8">
+            <div class="flex-1">
+                <div class="inline-flex items-center gap-x-2 px-4 py-1 bg-white/5 border border-white/10 rounded-full mb-4 text-sm">
+                    <div class="px-2 py-px bg-emerald-500 text-white text-[10px] font-bold rounded">LIVE</div>
+                    <span>1,284 coins launched in the last 24h</span>
+                </div>
+                
+                <h1 class="text-[68px] lg:text-[82px] leading-[0.92] font-black tracking-[-4.2px] mb-4">
+                    Launch.<br>
+                    <span class="bg-gradient-to-r from-[#00A0E9] via-[#00F0FF] to-[#00A0E9] bg-clip-text text-transparent">Moon.</span><br>
+                    On TON.
+                </h1>
+                
+                <p class="max-w-md text-xl text-white/70">The fastest way to create, trade &amp; graduate meme coins on The Open Network.</p>
+                
+                <div class="flex flex-wrap gap-3 mt-7">
+                    <button onclick="showCreateModal()" 
+                            class="px-9 py-4 ton-gradient hover:brightness-110 active:scale-[0.985] text-white font-bold text-lg rounded-3xl flex items-center gap-x-3 shadow-2xl neon-glow transition-all">
+                        <i class="fa-solid fa-rocket text-xl"></i>
+                        <span>Launch Coin Now</span>
+                    </button>
+                    
+                    <button onclick="document.getElementById('discover-section').scrollIntoView({behavior:'smooth'})" 
+                            class="px-8 py-4 border border-white/20 hover:bg-white/5 font-semibold text-lg rounded-3xl flex items-center gap-x-2 transition-all">
+                        <span>Browse Live Tokens</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Hero Stats -->
+            <div class="grid grid-cols-3 gap-4 lg:w-auto w-full">
+                <div class="glass border border-white/10 rounded-3xl p-5">
+                    <div class="text-xs text-white/50">24H VOLUME</div>
+                    <div id="hero-volume" class="text-4xl font-black tabular-nums mt-1">187.4k</div>
+                    <div class="text-emerald-400 text-xs flex items-center gap-x-1 mt-1">
+                        <i class="fa-solid fa-arrow-trend-up"></i> <span>+34.2%</span>
+                    </div>
+                </div>
+                <div class="glass border border-white/10 rounded-3xl p-5">
+                    <div class="text-xs text-white/50">TOTAL LAUNCHED</div>
+                    <div id="hero-launched" class="text-4xl font-black tabular-nums mt-1">94,872</div>
+                    <div class="text-emerald-400 text-xs flex items-center gap-x-1 mt-1">
+                        <i class="fa-solid fa-arrow-trend-up"></i> <span>+2,184 today</span>
+                    </div>
+                </div>
+                <div class="glass border border-white/10 rounded-3xl p-5">
+                    <div class="text-xs text-white/50">GRADUATED</div>
+                    <div id="hero-graduated" class="text-4xl font-black tabular-nums mt-1">11,429</div>
+                    <div class="text-white/50 text-xs mt-1">to DeDust • STON.fi</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="max-w-screen-2xl mx-auto px-6 pb-16">
+        <div id="home-view">
+            <!-- Discover Header -->
+            <div id="discover-section" class="flex flex-col lg:flex-row lg:items-center justify-between gap-y-4 mb-6">
+                <div>
+                    <h2 class="section-header">Live Tokens</h2>
+                    <p class="text-white/60">Real-time bonding curves • Instant graduation to DeDust</p>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <!-- Search -->
+                    <div class="relative w-full sm:w-80">
+                        <input id="search-input" type="text" placeholder="Search by name or ticker..." 
+                               onkeyup="debounceFilter()" 
+                               class="w-full bg-[#111118] border border-white/10 focus:border-[#00A0E9] pl-11 py-3 text-sm rounded-2xl outline-none">
+                        <i class="fa-solid fa-search absolute left-4 top-4 text-white/40"></i>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <select id="sort-select" onchange="filterTokens()" class="bg-[#111118] border border-white/10 px-4 py-3 rounded-2xl text-sm cursor-pointer outline-none">
+                            <option value="trending">🔥 Trending</option>
+                            <option value="newest">Newest</option>
+                            <option value="mcap">Highest MCAP</option>
+                            <option value="progress">Fastest Progress</option>
+                        </select>
+                        
+                        <div class="flex bg-[#111118] border border-white/10 rounded-2xl p-1">
+                            <div onclick="filterByTab('all')" class="tab-btn active px-5 py-2 text-sm rounded-xl cursor-pointer" data-tab="all">All</div>
+                            <div onclick="filterByTab('bonding')" class="tab-btn px-5 py-2 text-sm rounded-xl cursor-pointer" data-tab="bonding">Bonding</div>
+                            <div onclick="filterByTab('graduated')" class="tab-btn px-5 py-2 text-sm rounded-xl cursor-pointer" data-tab="graduated">DEX</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tokens Grid -->
+            <div id="tokens-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5"></div>
+        </div>
+
+        <!-- PORTFOLIO VIEW -->
+        <div id="portfolio-view" class="hidden">
+            <div class="flex items-end justify-between mb-8">
+                <div>
+                    <h2 class="section-header">Your Portfolio</h2>
+                    <p class="text-white/60">Track your bags across the TON meme economy</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs text-white/50">TOTAL VALUE</div>
+                    <div id="portfolio-total" class="text-5xl font-black tabular-nums">0.00</div>
+                    <div class="text-emerald-400 text-sm">+18.7% today</div>
+                </div>
+            </div>
+            <div id="portfolio-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"></div>
+        </div>
+    </div>
+
+    <!-- LIVE GLOBAL ACTIVITY SIDEBAR (Desktop) -->
+    <div class="hidden xl:block fixed right-6 bottom-6 w-80 bg-[#111118] border border-white/10 rounded-3xl p-5 z-40 shadow-2xl">
+        <div class="flex items-center justify-between mb-4">
+            <div class="font-semibold flex items-center gap-x-2">
+                <i class="fa-solid fa-globe text-emerald-400"></i>
+                <span>Live Activity</span>
+            </div>
+            <div class="text-[10px] px-2 py-px bg-emerald-500/20 text-emerald-400 rounded">LIVE</div>
+        </div>
+        <div id="global-activity" class="space-y-2 max-h-[380px] overflow-auto text-xs pr-1"></div>
+    </div>
+
+    <!-- TOKEN DETAIL MODAL -->
+    <div id="token-modal" onclick="if (event.target.id === 'token-modal') closeTokenModal()" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+        <div onclick="event.stopImmediatePropagation()" class="modal glass border border-white/10 rounded-3xl w-full max-w-[1080px] max-h-[94vh] overflow-hidden flex flex-col shadow-2xl">
+            
+            <!-- Modal Header -->
+            <div class="px-8 py-5 border-b border-white/10 flex items-center justify-between bg-black/40">
+                <div class="flex items-center gap-x-5">
+                    <div id="modal-image" class="w-16 h-16 rounded-2xl overflow-hidden border border-white/20 flex-shrink-0"></div>
+                    <div>
+                        <div class="flex items-center gap-x-3">
+                            <h3 id="modal-name" class="text-4xl font-black"></h3>
+                            <span id="modal-ticker" class="px-4 py-1 bg-white/10 text-white/80 font-mono text-sm rounded-2xl"></span>
+                            <span id="modal-status" class="px-4 py-1 text-xs font-bold rounded-2xl"></span>
+                        </div>
+                        <div class="flex items-center gap-x-4 text-sm text-white/50 mt-1">
+                            <span id="modal-creator"></span>
+                            <span>•</span>
+                            <span id="modal-created"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-x-2">
+                    <button onclick="copyContractAddress()" class="px-4 py-2 text-sm flex items-center gap-x-2 hover:bg-white/10 border border-white/10 rounded-2xl">
+                        <i class="fa-solid fa-copy"></i> <span class="hidden md:inline">Copy Address</span>
+                    </button>
+                    <button onclick="shareToX()" class="px-4 py-2 text-sm flex items-center gap-x-2 hover:bg-white/10 border border-white/10 rounded-2xl">
+                        <i class="fa-brands fa-x-twitter"></i>
+                    </button>
+                    <button onclick="closeTokenModal()" class="w-11 h-11 flex items-center justify-center hover:bg-white/10 text-3xl rounded-2xl">×</button>
+                </div>
+            </div>
+            
+            <div class="flex flex-col lg:flex-row flex-1 overflow-hidden">
+                
+                <!-- LEFT PANEL: Info + Chart -->
+                <div class="flex-1 p-8 overflow-y-auto border-r border-white/10">
+                    <div class="grid grid-cols-2 gap-4 mb-8">
+                        <div>
+                            <div class="text-xs text-white/50">CURRENT PRICE</div>
+                            <div id="modal-price" class="text-5xl font-black tabular-nums price-ticker mt-1"></div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs text-white/50">MARKET CAP</div>
+                            <div id="modal-mcap" class="text-4xl font-black tabular-nums mt-1"></div>
+                            <div class="text-emerald-400 text-sm">+127% since launch</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Bonding Curve Chart -->
+                    <div class="mb-8">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="font-semibold flex items-center gap-x-2">
+                                <span>Bonding Curve</span>
+                                <span class="text-[10px] px-2 py-px bg-white/10 rounded">Virtual Reserves Model</span>
+                            </div>
+                            <div id="modal-progress-text" class="font-mono text-sm"></div>
+                        </div>
+                        <div class="bg-black/50 border border-white/10 rounded-3xl p-5" style="height: 280px">
+                            <canvas id="curve-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Key Metrics -->
+                    <div class="grid grid-cols-3 gap-4 text-center">
+                        <div class="bg-black/40 rounded-2xl p-4">
+                            <div class="text-xs text-white/50">Raised</div>
+                            <div id="modal-raised" class="text-2xl font-bold tabular-nums"></div>
+                        </div>
+                        <div class="bg-black/40 rounded-2xl p-4">
+                            <div class="text-xs text-white/50">Holders</div>
+                            <div id="modal-holders" class="text-2xl font-bold tabular-nums"></div>
+                        </div>
+                        <div class="bg-black/40 rounded-2xl p-4">
+                            <div class="text-xs text-white/50">24h Volume</div>
+                            <div id="modal-volume" class="text-2xl font-bold tabular-nums">42.8k</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- RIGHT PANEL: Trade + Tabs -->
+                <div class="w-full lg:w-[380px] border-l border-white/10 flex flex-col bg-black/30">
+                    
+                    <!-- Trade Tabs -->
+                    <div class="flex border-b border-white/10 px-6 pt-5">
+                        <div onclick="switchTradeTab('buy')" id="tab-buy"
+                             class="flex-1 text-center pb-4 font-bold cursor-pointer border-b-2 border-[#00A0E9] text-[#00A0E9]">BUY</div>
+                        <div onclick="switchTradeTab('sell')" id="tab-sell"
+                             class="flex-1 text-center pb-4 font-bold cursor-pointer text-white/60">SELL</div>
+                    </div>
+                    
+                    <!-- Buy Panel -->
+                    <div id="buy-panel" class="p-6 flex-1 flex flex-col">
+                        <div class="flex justify-between text-xs mb-2">
+                            <div>Amount in TON</div>
+                            <div class="text-emerald-400">Balance: <span id="buy-balance" class="font-mono"></span></div>
+                        </div>
+                        
+                        <div class="relative mb-4">
+                            <input id="buy-amount" type="number" step="0.1" value="2.5" oninput="updateBuyPreview()" 
+                                   class="w-full bg-black border border-white/20 focus:border-[#00A0E9] text-4xl font-bold py-4 px-5 rounded-2xl outline-none">
+                            <div class="absolute right-5 top-5 text-white/50 font-medium">TON</div>
+                        </div>
+                        
+                        <div class="flex gap-2 mb-5">
+                            <div onclick="quickBuy(0.5)" class="flex-1 text-center py-2 text-xs bg-white/5 hover:bg-white/10 rounded-2xl cursor-pointer">0.5</div>
+                            <div onclick="quickBuy(1)" class="flex-1 text-center py-2 text-xs bg-white/5 hover:bg-white/10 rounded-2xl cursor-pointer">1</div>
+                            <div onclick="quickBuy(5)" class="flex-1 text-center py-2 text-xs bg-white/5 hover:bg-white/10 rounded-2xl cursor-pointer">5</div>
+                            <div onclick="quickBuy(10)" class="flex-1 text-center py-2 text-xs bg-white/5 hover:bg-white/10 rounded-2xl cursor-pointer">10</div>
+                        </div>
+                        
+                        <div class="bg-black/60 rounded-2xl p-4 text-sm mb-4 space-y-2.5 flex-1">
+                            <div class="flex justify-between"><span class="text-white/60">You receive</span> <span id="buy-receive" class="font-semibold"></span></div>
+                            <div class="flex justify-between"><span class="text-white/60">Price impact</span> <span class="text-emerald-400">+1.4%</span></div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-white/60">Slippage</span>
+                                <select id="slippage-buy" class="bg-transparent text-xs border border-white/20 rounded px-2 py-0.5">
+                                    <option>0.5%</option><option selected>1%</option><option>3%</option><option>5%</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button onclick="executeBuy()" id="buy-btn"
+                                class="w-full py-4 ton-gradient disabled:opacity-60 text-white font-extrabold text-lg rounded-2xl flex items-center justify-center gap-x-3 active:scale-[0.985]">
+                            <span>BUY <span id="buy-ticker-symbol"></span></span>
+                        </button>
+                    </div>
+                    
+                    <!-- Sell Panel -->
+                    <div id="sell-panel" class="hidden p-6 flex-1 flex flex-col">
+                        <div class="flex justify-between text-xs mb-2">
+                            <div>Tokens to sell</div>
+                            <div class="text-emerald-400">You own: <span id="sell-balance"></span></div>
+                        </div>
+                        
+                        <div class="relative mb-4">
+                            <input id="sell-amount" type="number" step="10000" value="2500000" oninput="updateSellPreview()" 
+                                   class="w-full bg-black border border-white/20 focus:border-[#00A0E9] text-4xl font-bold py-4 px-5 rounded-2xl outline-none">
+                            <div id="sell-ticker-label" class="absolute right-5 top-5 text-white/50 font-medium"></div>
+                        </div>
+                        
+                        <div class="flex gap-2 mb-5">
+                            <div onclick="quickSellPercent(25)" class="flex-1 text-center py-2 text-xs bg-white/5 hover:bg-white/10 rounded-2xl cursor-pointer">25%</div>
+                            <div onclick="quickSellPercent(50)" class="flex-1 text-center py-2 text-xs bg-white/5 hover:bg-white/10 rounded-2xl cursor-pointer">50%</div>
+                            <div onclick="quickSellPercent(75)" class="flex-1 text-center py-2 text-xs bg-white/5 hover:bg-white/10 rounded-2xl cursor-pointer">75%</div>
+                            <div onclick="quickSellPercent(100)" class="flex-1 text-center py-2 text-xs bg-white/5 hover:bg-white/10 rounded-2xl cursor-pointer">MAX</div>
+                        </div>
+                        
+                        <div class="bg-black/60 rounded-2xl p-4 text-sm mb-4 space-y-2.5 flex-1">
+                            <div class="flex justify-between"><span class="text-white/60">You receive</span> <span id="sell-receive" class="font-semibold"></span> TON</div>
+                            <div class="flex justify-between"><span class="text-white/60">Price impact</span> <span class="text-orange-400">-2.1%</span></div>
+                        </div>
+                        
+                        <button onclick="executeSell()" id="sell-btn"
+                                class="w-full py-4 bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white font-extrabold text-lg rounded-2xl flex items-center justify-center gap-x-3 active:scale-[0.985]">
+                            <span>SELL <span id="sell-ticker-symbol"></span></span>
+                        </button>
+                    </div>
+                    
+                    <!-- Holders & Activity Tabs -->
+                    <div class="border-t border-white/10 p-5 text-xs flex-1 overflow-auto">
+                        <div class="flex mb-3">
+                            <div onclick="showHoldersTab()" class="flex-1 text-center py-1.5 cursor-pointer font-semibold border-b border-[#00A0E9] text-[#00A0E9]" id="holders-tab-btn">TOP HOLDERS</div>
+                            <div onclick="showActivityTab()" class="flex-1 text-center py-1.5 cursor-pointer font-semibold text-white/60" id="activity-tab-btn">ACTIVITY</div>
+                        </div>
+                        
+                        <div id="holders-content">
+                            <!-- Populated by JS -->
+                        </div>
+                        <div id="activity-content" class="hidden">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Comments Bar -->
+            <div class="border-t border-white/10 p-5 bg-black/50">
+                <div class="flex gap-x-3">
+                    <input id="comment-input" type="text" placeholder="Drop a comment..." 
+                           class="flex-1 bg-black border border-white/10 px-5 py-3 rounded-2xl text-sm" onkeypress="if(event.key==='Enter') addComment()">
+                    <button onclick="addComment()" class="px-7 bg-[#00A0E9] hover:bg-[#0090d1] font-semibold rounded-2xl text-sm">Post</button>
+                </div>
+                <div id="comments-bar" class="mt-4 text-xs flex flex-wrap gap-x-4 text-white/60 max-h-[52px] overflow-hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CREATE MODAL -->
+    <div id="create-modal" onclick="if (event.target.id === 'create-modal') closeCreateModal()" class="hidden fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-4">
+        <div onclick="event.stopImmediatePropagation()" class="modal glass border border-white/10 rounded-3xl w-full max-w-lg">
+            <div class="px-8 pt-7 pb-5 border-b border-white/10">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="font-black text-3xl">Launch new coin</div>
+                        <div class="text-white/50 text-sm">Deploy Jetton + bonding curve in seconds</div>
+                    </div>
+                    <button onclick="closeCreateModal()" class="text-4xl leading-none text-white/40 hover:text-white">×</button>
+                </div>
+            </div>
+            
+            <div class="p-8 space-y-6">
+                <!-- Image -->
+                <div>
+                    <label class="text-xs font-semibold text-white/60 block mb-2">TOKEN IMAGE</label>
+                    <div id="create-image-area" onclick="document.getElementById('create-image-input').click()"
+                         class="border-2 border-dashed border-white/20 hover:border-[#00A0E9] rounded-3xl h-44 flex items-center justify-center cursor-pointer relative overflow-hidden">
+                        <input type="file" id="create-image-input" accept="image/*" class="hidden" onchange="handleCreateImage(event)">
+                        <div id="create-image-preview" class="hidden absolute inset-0"><img id="create-preview-img" class="w-full h-full object-cover"></div>
+                        <div id="create-image-placeholder" class="text-center">
+                            <i class="fa-solid fa-image text-4xl text-white/30 mb-3"></i>
+                            <div class="text-sm text-white/60">Upload or drag image</div>
+                            <div class="text-[10px] text-white/40">512×512 recommended</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-5">
+                    <div>
+                        <label class="text-xs font-semibold text-white/60 block mb-1.5">NAME</label>
+                        <input id="create-name" type="text" placeholder="Based Pepe" class="w-full bg-black border border-white/10 px-5 py-3 rounded-2xl focus:border-[#00A0E9] outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-white/60 block mb-1.5">TICKER</label>
+                        <input id="create-ticker" type="text" maxlength="6" placeholder="BPEPE" oninput="this.value=this.value.toUpperCase()"
+                               class="w-full bg-black border border-white/10 px-5 py-3 rounded-2xl focus:border-[#00A0E9] outline-none">
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label class="text-xs font-semibold text-white/60">DESCRIPTION</label>
+                        <button onclick="generateFunnyDescription()" class="text-xs flex items-center gap-x-1 text-[#00A0E9] hover:underline">
+                            <i class="fa-solid fa-magic"></i> <span>AI Generate</span>
+                        </button>
+                    </div>
+                    <textarea id="create-desc" rows="3" placeholder="The most based frog on TON..." 
+                              class="w-full bg-black border border-white/10 px-5 py-3 rounded-2xl text-sm focus:border-[#00A0E9] outline-none"></textarea>
+                </div>
+                
+                <div>
+                    <label class="text-xs font-semibold text-white/60 block mb-1.5">INITIAL BUY (OPTIONAL)</label>
+                    <div class="relative">
+                        <input id="create-initial" type="number" value="1.5" step="0.1" class="w-full bg-black border border-white/10 px-5 py-3 rounded-2xl focus:border-[#00A0E9] outline-none">
+                        <div class="absolute right-5 top-3.5 text-white/50">TON</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="px-8 py-6 border-t border-white/10 flex gap-x-3">
+                <button onclick="closeCreateModal()" class="flex-1 py-3.5 border border-white/20 hover:bg-white/5 font-semibold rounded-2xl">Cancel</button>
+                <button onclick="launchToken()" id="launch-btn"
+                        class="flex-1 py-3.5 ton-gradient text-white font-extrabold rounded-2xl flex items-center justify-center gap-x-2 active:scale-[0.985]">
+                    <i class="fa-solid fa-rocket"></i>
+                    <span>LAUNCH ON TON</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- WALLET MODAL -->
+    <div id="wallet-modal" onclick="if (event.target.id === 'wallet-modal') closeWalletModal()" class="hidden fixed inset-0 bg-black/90 z-[120] flex items-center justify-center p-4">
+        <div onclick="event.stopImmediatePropagation()" class="modal glass border border-white/10 rounded-3xl w-full max-w-md p-8">
+            <div class="text-center mb-7">
+                <div class="mx-auto w-16 h-16 ton-gradient rounded-2xl flex items-center justify-center mb-4">
+                    <i class="fa-solid fa-wallet text-4xl text-white"></i>
+                </div>
+                <div class="font-black text-3xl">Connect Wallet</div>
+                <div class="text-white/60">Choose your TON wallet</div>
+            </div>
+            
+            <div class="space-y-3">
+                <div onclick="connectSpecificWallet('tonkeeper')" class="flex items-center gap-x-4 bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-2xl cursor-pointer">
+                    <div class="w-11 h-11 bg-[#00A0E9] rounded-xl flex items-center justify-center"><i class="fa-brands fa-telegram text-white text-2xl"></i></div>
+                    <div class="flex-1"><div class="font-semibold">Tonkeeper</div><div class="text-xs text-white/50">Most popular</div></div>
+                    <i class="fa-solid fa-chevron-right text-white/40"></i>
+                </div>
+                <div onclick="connectSpecificWallet('telegram')" class="flex items-center gap-x-4 bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-2xl cursor-pointer">
+                    <div class="w-11 h-11 bg-[#229ED9] rounded-xl flex items-center justify-center"><i class="fa-brands fa-telegram-plane text-white text-2xl"></i></div>
+                    <div class="flex-1"><div class="font-semibold">Telegram Wallet</div><div class="text-xs text-white/50">Built-in</div></div>
+                    <i class="fa-solid fa-chevron-right text-white/40"></i>
+                </div>
+                <div onclick="connectSpecificWallet('myton')" class="flex items-center gap-x-4 bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-2xl cursor-pointer">
+                    <div class="w-11 h-11 bg-white rounded-xl flex items-center justify-center"><i class="fa-solid fa-wallet text-black text-2xl"></i></div>
+                    <div class="flex-1"><div class="font-semibold">MyTonWallet</div><div class="text-xs text-white/50">Open source</div></div>
+                    <i class="fa-solid fa-chevron-right text-white/40"></i>
+                </div>
+            </div>
+            
+            <div class="text-center mt-6 text-xs text-white/40">Secured by TON Connect • No seed phrase shared</div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[200] space-y-3"></div>
+
+    <script>
+        let tokens = [];
+        let currentUser = null;
+        let currentTokenId = null;
+        let curveChart = null;
+        let currentFilterTab = 'all';
+        let globalActivity = [];
+        
+        const CURVE = {
+            virtualTonReserves: 85,
+            virtualTokenReserves: 1073741824,
+            totalSupply: 1000000000
+        };
+        
+        function getK() { return CURVE.virtualTonReserves * CURVE.virtualTokenReserves; }
+        function getCurrentPrice(sold) { const remaining = CURVE.virtualTokenReserves - sold; return getK() / remaining; }
+        function calculateTokensForTon(tonAmount, currentSold) {
+            if (tonAmount <= 0) return 0;
+            const k = getK();
+            const newTonReserves = CURVE.virtualTonReserves + tonAmount;
+            const newTokenReserves = k / newTonReserves;
+            return CURVE.virtualTokenReserves - newTokenReserves;
+        }
+        function calculateTonForTokens(tokensToSell, currentSold) {
+            if (tokensToSell <= 0) return 0;
+            const k = getK();
+            const newTokenReserves = CURVE.virtualTokenReserves - currentSold + tokensToSell;
+            const newTonReserves = k / newTokenReserves;
+            return newTonReserves - CURVE.virtualTonReserves;
+        }
+        function calculateMarketCap(token) { return token.currentPrice * CURVE.totalSupply; }
+        function calculateProgress(token) { return Math.min((token.raised / 42) * 100, 100); }
+        
+        function updateTokenMetrics(token) {
+            token.currentPrice = getCurrentPrice(token.sold);
+            token.marketCap = calculateMarketCap(token);
+            token.progress = calculateProgress(token);
+            if (token.progress >= 100 && !token.graduated) {
+                token.graduated = true;
+                launchConfetti();
+                showToast(`🎉 ${token.ticker} graduated to DeDust! Liquidity added.`, 'success');
+            }
+        }
+        
+        function seedTokens() {
+            const now = Date.now();
+            tokens = [
+                { id: now-1, name: "TONPEPE", ticker: "PEPE", desc: "The original frog has arrived on TON.", image: "https://picsum.photos/id/1015/512/512", creator: "UQAb...xK9p", createdAt: now-3600000*5, sold: 682000000, raised: 34.7, comments: [{user:"0xMemeLord", text:"This is going to 100x easy", time:now-120000}], activity: [{type:'buy', user:'UQ...4k2m', amountTON:4.2, amountTokens:12400000, time:now-180000}], graduated:false, holders:1843 },
+                { id: now-2, name: "DogeTON", ticker: "DOGE", desc: "Much wow. Very blockchain. Such TON.", image: "https://picsum.photos/id/102/512/512", creator: "UQDe...fL2q", createdAt: now-3600000*19, sold: 941000000, raised: 41.9, comments: [{user:"dogeOG", text:"To the moon and beyond 🚀", time:now-300000}], activity: [], graduated:false, holders:1241 },
+                { id: now-3, name: "Notcoin 2.0", ticker: "NOT2", desc: "The tap-to-earn legend returns stronger.", image: "https://picsum.photos/id/106/512/512", creator: "UQMn...8vX3", createdAt: now-3600000*43, sold: 312000000, raised: 11.4, comments: [], activity: [], graduated:false, holders:672 },
+                { id: now-4, name: "TONKONG", ticker: "KONG", desc: "King of the jungle meets king of blockchain.", image: "https://picsum.photos/id/133/512/512", creator: "UQCv...rT9m", createdAt: now-3600000*4, sold: 198000000, raised: 5.8, comments: [{user:"apeKing", text:"This ape is strong", time:now-90000}], activity: [], graduated:false, holders:312 },
+                { id: now-5, name: "STONKS", ticker: "STONK", desc: "STONKS only go up. Especially on TON.", image: "https://picsum.photos/id/160/512/512", creator: "UQZx...bN4k", createdAt: now-3600000*28, sold: 1000000000, raised: 42.0, comments: [{user:"stonkMaster", text:"Already graduated! LFG", time:now-700000}], activity: [], graduated:true, holders:2841 },
+                { id: now-6, name: "HAMSTER KOMBAT", ticker: "HMSTR", desc: "The cutest hamster in crypto on TON.", image: "https://picsum.photos/id/201/512/512", creator: "UQPl...wX7v", createdAt: now-3600000*11, sold: 467000000, raised: 19.3, comments: [], activity: [], graduated:false, holders:589 },
+                { id: now-7, name: "Based Cat", ticker: "BCAT", desc: "The most based cat on the internet. Now on TON.", image: "https://picsum.photos/id/1005/512/512", creator: "UQRm...kP4t", createdAt: now-3600000*2, sold: 89000000, raised: 2.1, comments: [{user:"catLover69", text:"Meow to the moon", time:now-45000}], activity: [], graduated:false, holders:167 },
+                { id: now-8, name: "TONWIF", ticker: "WIF", desc: "Dogwifhat but make it TON. The hat stays on.", image: "https://picsum.photos/id/1074/512/512", creator: "UQTn...vL8x", createdAt: now-3600000*7, sold: 721000000, raised: 29.4, comments: [], activity: [], graduated:false, holders:934 },
+                { id: now-9, name: "Pixel Pepe", ticker: "PPEP", desc: "8-bit frog supremacy. Retro memes for the win.", image: "https://picsum.photos/id/1033/512/512", creator: "UQHb...mZ2q", createdAt: now-3600000*15, sold: 134000000, raised: 4.3, comments: [], activity: [], graduated:false, holders:241 },
+                { id: now-10, name: "TONMOON", ticker: "MOON", desc: "To the moon, but on the fastest chain.", image: "https://picsum.photos/id/1049/512/512", creator: "UQWx...rY6p", createdAt: now-3600000*31, sold: 1000000000, raised: 42.0, comments: [], activity: [], graduated:true, holders:1567 },
+                { id: now-11, name: "FrogWifHat", ticker: "FWH", desc: "Frog + Hat = Generational wealth on TON.", image: "https://picsum.photos/id/1060/512/512", creator: "UQJk...nB3v", createdAt: now-3600000*1, sold: 45000000, raised: 1.2, comments: [{user:"basedFrog", text:"This one is different", time:now-20000}], activity: [], graduated:false, holders:89 },
+                { id: now-12, name: "TONBULL", ticker: "BULL", desc: "Bullish on TON. Bullish on memes. Simple.", image: "https://picsum.photos/id/107/512/512", creator: "UQVc...pQ9m", createdAt: now-3600000*22, sold: 583000000, raised: 23.7, comments: [], activity: [], graduated:false, holders:712 }
+            ];
+            tokens.forEach(t => {
+                if (!t.currentPrice) t.currentPrice = getCurrentPrice(t.sold);
+                if (!t.marketCap) t.marketCap = calculateMarketCap(t);
+                if (!t.progress) t.progress = calculateProgress(t);
+            });
+            localStorage.setItem('pumpTonV2Tokens', JSON.stringify(tokens));
+        }
+        
+        function loadState() {
+            const saved = localStorage.getItem('pumpTonV2Tokens');
+            tokens = saved ? JSON.parse(saved) : (seedTokens(), tokens);
+            const user = localStorage.getItem('pumpTonV2User');
+            if (user) currentUser = JSON.parse(user);
+        }
+        function saveState() {
+            localStorage.setItem('pumpTonV2Tokens', JSON.stringify(tokens));
+            if (currentUser) localStorage.setItem('pumpTonV2User', JSON.stringify(currentUser));
+        }
+        
+        function launchConfetti() {
+            confetti({ particleCount: 180, spread: 80, origin: { y: 0.6 } });
+            setTimeout(() => confetti({ particleCount: 120, angle: 60, spread: 70, origin: { x: 0.1 } }), 220);
+        }
+        
+        function renderTokens(filtered = null) {
+            const grid = document.getElementById('tokens-grid');
+            grid.innerHTML = '';
+            let list = filtered || tokens;
+            if (currentFilterTab === 'bonding') list = list.filter(t => !t.graduated);
+            else if (currentFilterTab === 'graduated') list = list.filter(t => t.graduated);
+            if (list.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-16 text-center"><i class="fa-solid fa-search text-5xl text-white/20 mb-4"></i><div class="text-2xl font-semibold">No tokens found</div></div>`;
+                return;
+            }
+            list.forEach(token => {
+                updateTokenMetrics(token);
+                const progress = token.progress || 0;
+                const mcap = (token.marketCap / 1000).toFixed(1) + 'k';
+                const card = document.createElement('div');
+                card.className = `pump-card glass border border-white/10 rounded-3xl overflow-hidden cursor-pointer group`;
+                card.innerHTML = `
+                    <div class="relative">
+                        <img src="${token.image}" class="token-image w-full aspect-square object-cover" alt="${token.name}">
+                        ${token.graduated ? `<div class="absolute top-4 right-4 bg-emerald-500 text-white text-xs font-bold px-3.5 py-1 rounded-2xl flex items-center gap-x-1.5"><i class="fa-solid fa-check-double"></i> <span>DEX</span></div>` : `<div class="absolute top-4 right-4 bg-[#00A0E9] text-white text-xs font-bold px-3 py-1 rounded-2xl">BONDING</div>`}
+                        <div class="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/90 to-transparent"></div>
+                        <div class="absolute bottom-4 left-4 right-4">
+                            <div class="flex justify-between items-end">
+                                <div><div class="font-black text-2xl leading-none">${token.name}</div><div class="font-mono text-sm text-white/70">$${token.ticker}</div></div>
+                                <div class="text-right"><div class="text-xs text-white/60">MCAP</div><div class="font-bold tabular-nums">${mcap}</div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-4 pt-3">
+                        <div class="flex justify-between text-xs mb-1.5"><span class="text-white/50">Progress</span><span class="font-mono font-medium">${progress.toFixed(0)}%</span></div>
+                        <div class="h-2.5 bg-white/10 rounded-full overflow-hidden mb-4"><div class="bonding-bar h-2.5" style="width: ${progress}%"></div></div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center text-xs text-white/50"><i class="fa-solid fa-users mr-1.5"></i><span>${token.holders.toLocaleString()}</span></div>
+                            <button onclick="event.stopImmediatePropagation(); quickBuyFromCard(${token.id})" class="px-5 py-1.5 text-xs font-bold bg-white/10 hover:bg-[#00A0E9] hover:text-white transition-all rounded-2xl flex items-center gap-x-1.5"><i class="fa-solid fa-shopping-cart text-xs"></i><span>Buy</span></button>
+                        </div>
+                    </div>`;
+                card.onclick = () => openTokenModal(token.id);
+                grid.appendChild(card);
+            });
+        }
+        
+        function filterTokens() {
+            const term = document.getElementById('search-input').value.toLowerCase();
+            const sort = document.getElementById('sort-select').value;
+            let filtered = tokens.filter(t => t.name.toLowerCase().includes(term) || t.ticker.toLowerCase().includes(term));
+            if (sort === 'trending') filtered.sort((a,b) => (b.holders * b.progress) - (a.holders * a.progress));
+            else if (sort === 'newest') filtered.sort((a,b) => b.createdAt - a.createdAt);
+            else if (sort === 'mcap') filtered.sort((a,b) => b.marketCap - a.marketCap);
+            else if (sort === 'progress') filtered.sort((a,b) => b.progress - a.progress);
+            renderTokens(filtered);
+        }
+        
+        let debounceTimer;
+        function debounceFilter() { clearTimeout(debounceTimer); debounceTimer = setTimeout(filterTokens, 180); }
+        
+        function filterByTab(tab) {
+            currentFilterTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.toggle('active', el.dataset.tab === tab);
+                el.classList.toggle('bg-white/10', el.dataset.tab === tab);
+            });
+            filterTokens();
+        }
+        
+        function showWalletModal() { document.getElementById('wallet-modal').classList.remove('hidden'); document.getElementById('wallet-modal').classList.add('flex'); }
+        function closeWalletModal() { document.getElementById('wallet-modal').classList.add('hidden'); document.getElementById('wallet-modal').classList.remove('flex'); }
+        
+        function connectSpecificWallet(type) {
+            closeWalletModal();
+            let address = type === 'tonkeeper' ? 'UQAbcdef1234567890xyz_' + Math.floor(Math.random()*9999) : type === 'telegram' ? 'UQTelegram' + Math.floor(Math.random()*100000) : 'UQMyTon' + Math.floor(Math.random()*100000);
+            currentUser = { address, balance: 124.87, holdings: {}, joined: Date.now() };
+            if (tokens.length > 0) { currentUser.holdings[tokens[0].id] = 18750000; currentUser.holdings[tokens[2].id] = 4200000; }
+            updateWalletUI(); saveState(); showToast('Wallet connected successfully!', 'success');
+            setTimeout(() => { if (!document.getElementById('token-modal').classList.contains('hidden') && currentTokenId) openTokenModal(currentTokenId); }, 600);
+        }
+        
+        function disconnectWallet() {
+            currentUser = null; localStorage.removeItem('pumpTonV2User');
+            document.getElementById('wallet-info').classList.add('hidden'); document.getElementById('connect-btn').classList.remove('hidden');
+            showToast('Wallet disconnected'); renderTokens();
+            if (!document.getElementById('portfolio-view').classList.contains('hidden')) renderPortfolio();
+        }
+        
+        function updateWalletUI() {
+            const info = document.getElementById('wallet-info'); const btn = document.getElementById('connect-btn');
+            if (!currentUser) { info.classList.add('hidden'); btn.classList.remove('hidden'); return; }
+            info.classList.remove('hidden'); btn.classList.add('hidden');
+            document.getElementById('wallet-address').innerHTML = currentUser.address.substring(0,7) + '...' + currentUser.address.slice(-4);
+            document.getElementById('wallet-balance').innerHTML = currentUser.balance.toFixed(2) + ' TON';
+        }
+        
+        function openTokenModal(id) {
+            currentTokenId = id; const token = tokens.find(t => t.id === id); if (!token) return; updateTokenMetrics(token);
+            document.getElementById('modal-name').innerHTML = token.name;
+            document.getElementById('modal-ticker').innerHTML = '$' + token.ticker;
+            document.getElementById('modal-creator').innerHTML = 'by ' + token.creator;
+            document.getElementById('modal-created').innerHTML = new Date(token.createdAt).toLocaleDateString('en-US', {month:'short', day:'numeric'});
+            document.getElementById('modal-image').innerHTML = `<img src="${token.image}" class="w-full h-full object-cover" alt="">`;
+            const status = document.getElementById('modal-status');
+            status.innerHTML = token.graduated ? `<span class="bg-emerald-500 text-white px-4 py-1 rounded-2xl text-xs font-bold">GRADUATED • DeDust</span>` : `<span class="bg-[#00A0E9] text-white px-4 py-1 rounded-2xl text-xs font-bold">BONDING CURVE LIVE</span>`;
+            document.getElementById('modal-price').innerHTML = token.currentPrice.toFixed(8) + ' TON';
+            document.getElementById('modal-mcap').innerHTML = (token.marketCap / 1000).toFixed(1) + 'k';
+            document.getElementById('modal-raised').innerHTML = token.raised.toFixed(1) + ' TON';
+            document.getElementById('modal-holders').innerHTML = token.holders.toLocaleString();
+            document.getElementById('modal-volume').innerHTML = (Math.random()*80 + 12).toFixed(1) + 'k';
+            document.getElementById('modal-progress-text').innerHTML = `${(token.progress||0).toFixed(0)}% • ${token.raised.toFixed(1)} / 42 TON`;
+            updateTradePanel(); renderHolders(token); renderActivityInModal(token); renderCommentsBar(token);
+            setTimeout(() => renderCurveChart(token), 280);
+            document.getElementById('token-modal').classList.remove('hidden'); document.getElementById('token-modal').classList.add('flex');
+        }
+        
+        function closeTokenModal() { document.getElementById('token-modal').classList.add('hidden'); document.getElementById('token-modal').classList.remove('flex'); if (curveChart) { curveChart.destroy(); curveChart = null; } currentTokenId = null; }
+        
+        function renderCurveChart(token) {
+            const ctx = document.getElementById('curve-chart'); if (!ctx) return; if (curveChart) curveChart.destroy();
+            const labels = [], prices = []; const steps = 22; const maxSold = Math.max(token.sold * 1.2, 150000000);
+            for (let i = 0; i <= steps; i++) { const soldPoint = (maxSold / steps) * i; labels.push((soldPoint / 1000000).toFixed(0) + 'M'); prices.push(getCurrentPrice(soldPoint)); }
+            curveChart = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'Price', data: prices, borderColor: '#00F0FF', borderWidth: 3.5, tension: 0.38, fill: true, backgroundColor: 'rgba(0,240,255,0.08)', pointRadius: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.raw.toFixed(8) + ' TON' } } }, scales: { x: { grid: { color: '#ffffff10' }, ticks: { color: '#666', font: { size: 10 } } }, y: { grid: { color: '#ffffff10' }, ticks: { color: '#666', font: { size: 10 }, callback: v => v.toFixed(6) } } } } });
+        }
+        
+        function updateTradePanel() {
+            if (!currentUser) { document.getElementById('buy-balance').innerHTML = '0.00'; document.getElementById('sell-balance').innerHTML = '0'; document.getElementById('buy-btn').disabled = true; document.getElementById('sell-btn').disabled = true; return; }
+            const token = tokens.find(t => t.id === currentTokenId); if (!token) return;
+            document.getElementById('buy-balance').innerHTML = currentUser.balance.toFixed(2); document.getElementById('buy-ticker-symbol').innerHTML = token.ticker; document.getElementById('buy-btn').disabled = token.graduated;
+            const owned = currentUser.holdings[currentTokenId] || 0; document.getElementById('sell-balance').innerHTML = (owned / 1000000).toFixed(2) + 'M'; document.getElementById('sell-ticker-symbol').innerHTML = token.ticker; document.getElementById('sell-ticker-label').innerHTML = token.ticker; document.getElementById('sell-btn').disabled = owned < 1000;
+            updateBuyPreview(); updateSellPreview();
+        }
+        
+        function switchTradeTab(tab) {
+            const buyP = document.getElementById('buy-panel'); const sellP = document.getElementById('sell-panel'); const buyTab = document.getElementById('tab-buy'); const sellTab = document.getElementById('tab-sell');
+            if (tab === 'buy') { buyP.classList.remove('hidden'); sellP.classList.add('hidden'); buyTab.classList.add('border-b-2', 'border-[#00A0E9]', 'text-[#00A0E9]'); sellTab.classList.remove('border-b-2', 'border-[#00A0E9]', 'text-[#00A0E9]'); }
+            else { sellP.classList.remove('hidden'); buyP.classList.add('hidden'); sellTab.classList.add('border-b-2', 'border-[#00A0E9]', 'text-[#00A0E9]'); buyTab.classList.remove('border-b-2', 'border-[#00A0E9]', 'text-[#00A0E9]'); }
+        }
+        
+        function updateBuyPreview() { const amt = parseFloat(document.getElementById('buy-amount').value) || 0; const token = tokens.find(t => t.id === currentTokenId); if (!token) return; const received = calculateTokensForTon(amt, token.sold); document.getElementById('buy-receive').innerHTML = (received / 1000000).toFixed(2) + 'M ' + token.ticker; }
+        function updateSellPreview() { const amt = parseFloat(document.getElementById('sell-amount').value) || 0; const token = tokens.find(t => t.id === currentTokenId); if (!token) return; const received = calculateTonForTokens(amt, token.sold); document.getElementById('sell-receive').innerHTML = received.toFixed(3); }
+        function quickBuy(amount) { document.getElementById('buy-amount').value = amount; updateBuyPreview(); }
+        function quickSellPercent(pct) { const token = tokens.find(t => t.id === currentTokenId); if (!token || !currentUser) return; const owned = currentUser.holdings[currentTokenId] || 0; document.getElementById('sell-amount').value = Math.floor(owned * (pct / 100)); updateSellPreview(); }
+        
+        function executeBuy() {
+            if (!currentUser || !currentTokenId) { showToast('Connect wallet first', 'error'); return; }
+            const token = tokens.find(t => t.id === currentTokenId); if (!token || token.graduated) return;
+            const amt = parseFloat(document.getElementById('buy-amount').value); if (!amt || amt > currentUser.balance) { showToast('Insufficient balance', 'error'); return; }
+            const btn = document.getElementById('buy-btn'); btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Signing...`; btn.disabled = true;
+            setTimeout(() => {
+                const received = calculateTokensForTon(amt, token.sold); token.sold += received; token.raised += amt; currentUser.balance -= amt; currentUser.holdings[currentTokenId] = (currentUser.holdings[currentTokenId] || 0) + received; token.holders++;
+                token.activity = token.activity || []; token.activity.unshift({ type: 'buy', user: currentUser.address.substring(0,6)+'...', amountTON: amt, amountTokens: received, time: Date.now() }); if (token.activity.length > 6) token.activity.pop();
+                updateTokenMetrics(token); saveState(); btn.innerHTML = `BUY <span>${token.ticker}</span>`; btn.disabled = false;
+                openTokenModal(currentTokenId); showToast(`Bought ${(received/1000000).toFixed(2)}M ${token.ticker}!`, 'success'); updateWalletUI(); renderTokens(); addGlobalActivity(token, 'buy', amt, received);
+                if (token.graduated) setTimeout(() => launchConfetti(), 400);
+            }, 1350);
+        }
+        
+        function executeSell() {
+            if (!currentUser || !currentTokenId) return; const token = tokens.find(t => t.id === currentTokenId); if (!token) return;
+            const amt = parseFloat(document.getElementById('sell-amount').value); const owned = currentUser.holdings[currentTokenId] || 0; if (!amt || amt > owned) { showToast('Not enough tokens', 'error'); return; }
+            const btn = document.getElementById('sell-btn'); btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Signing...`; btn.disabled = true;
+            setTimeout(() => {
+                const received = calculateTonForTokens(amt, token.sold); token.sold -= amt; token.raised = Math.max(0, token.raised - received * 0.92); currentUser.balance += received; currentUser.holdings[currentTokenId] -= amt; if (currentUser.holdings[currentTokenId] < 500) delete currentUser.holdings[currentTokenId];
+                token.activity = token.activity || []; token.activity.unshift({ type: 'sell', user: currentUser.address.substring(0,6)+'...', amountTON: received, amountTokens: amt, time: Date.now() });
+                updateTokenMetrics(token); saveState(); btn.innerHTML = `SELL <span>${token.ticker}</span>`; btn.disabled = false;
+                openTokenModal(currentTokenId); showToast(`Sold ${(amt/1000000).toFixed(2)}M ${token.ticker} for ${received.toFixed(2)} TON`, 'success'); updateWalletUI(); renderTokens(); addGlobalActivity(token, 'sell', received, amt);
+            }, 1100);
+        }
+        
+        function quickBuyFromCard(id) {
+            if (!currentUser) { showToast('Connect wallet to buy', 'error'); return; }
+            const token = tokens.find(t => t.id === id); if (!token || token.graduated) return;
+            const amt = 1.5; const received = calculateTokensForTon(amt, token.sold); token.sold += received; token.raised += amt; currentUser.balance -= amt; currentUser.holdings[id] = (currentUser.holdings[id] || 0) + received; token.holders++;
+            token.activity = token.activity || []; token.activity.unshift({ type: 'buy', user: currentUser.address.substring(0,6)+'...', amountTON: amt, amountTokens: received, time: Date.now() });
+            updateTokenMetrics(token); saveState(); showToast(`Quick bought ${(received/1000000).toFixed(2)}M ${token.ticker}!`, 'success'); renderTokens(); addGlobalActivity(token, 'buy', amt, received);
+            setTimeout(() => openTokenModal(id), 650);
+        }
+        
+        function renderHolders(token) {
+            const container = document.getElementById('holders-content'); container.innerHTML = '';
+            const holders = [{ addr: 'UQTop1...xK9p', pct: 12.4, amount: Math.floor(token.sold * 0.124) }, { addr: 'UQWhale...mN3v', pct: 8.7, amount: Math.floor(token.sold * 0.087) }, { addr: 'UQFrog...bP2q', pct: 6.2, amount: Math.floor(token.sold * 0.062) }, { addr: 'UQApe...rT8x', pct: 4.9, amount: Math.floor(token.sold * 0.049) }, { addr: 'UQChad...kL4m', pct: 3.8, amount: Math.floor(token.sold * 0.038) }];
+            holders.forEach((h, i) => {
+                const div = document.createElement('div'); div.className = `flex items-center justify-between py-2 px-1 ${i < 3 ? 'text-emerald-400' : ''}`;
+                div.innerHTML = `<div class="flex items-center gap-x-3"><div class="w-7 h-7 bg-white/10 rounded-full flex items-center justify-center text-xs font-bold">${i+1}</div><div class="font-mono text-xs">${h.addr}</div></div><div class="text-right"><div class="font-semibold tabular-nums">${(h.amount/1000000).toFixed(1)}M</div><div class="text-[10px] text-white/50">${h.pct}%</div></div>`;
+                container.appendChild(div);
+            });
+        }
+        
+        function renderActivityInModal(token) {
+            const container = document.getElementById('activity-content'); container.innerHTML = '';
+            if (!token.activity || token.activity.length === 0) { container.innerHTML = `<div class="text-center py-6 text-white/40 text-xs">No recent trades</div>`; return; }
+            token.activity.slice(0,4).forEach(act => { const div = document.createElement('div'); div.className = `flex justify-between items-center py-2 text-xs ${act.type === 'buy' ? 'text-emerald-400' : 'text-red-400'}`; div.innerHTML = `<div>${act.user} ${act.type === 'buy' ? 'bought' : 'sold'}</div><div class="text-right font-mono">${(act.amountTokens/1000000).toFixed(1)}M • ${act.amountTON} TON</div>`; container.appendChild(div); });
+        }
+        
+        function showHoldersTab() { document.getElementById('holders-content').classList.remove('hidden'); document.getElementById('activity-content').classList.add('hidden'); document.getElementById('holders-tab-btn').classList.add('border-b', 'border-[#00A0E9]', 'text-[#00A0E9]'); document.getElementById('activity-tab-btn').classList.remove('border-b', 'border-[#00A0E9]', 'text-[#00A0E9]'); }
+        function showActivityTab() { document.getElementById('holders-content').classList.add('hidden'); document.getElementById('activity-content').classList.remove('hidden'); document.getElementById('activity-tab-btn').classList.add('border-b', 'border-[#00A0E9]', 'text-[#00A0E9]'); document.getElementById('holders-tab-btn').classList.remove('border-b', 'border-[#00A0E9]', 'text-[#00A0E9]'); }
+        
+        function renderCommentsBar(token) {
+            const bar = document.getElementById('comments-bar'); bar.innerHTML = '';
+            if (!token.comments || token.comments.length === 0) { bar.innerHTML = `<span class="text-white/40">No comments yet. Be first!</span>`; return; }
+            token.comments.slice(-2).forEach(c => { const span = document.createElement('span'); span.className = 'mr-4'; span.innerHTML = `<span class="font-medium text-white/80">${c.user}:</span> ${c.text}`; bar.appendChild(span); });
+        }
+        
+        function addComment() {
+            if (!currentUser || !currentTokenId) { showToast('Connect wallet to comment', 'error'); return; }
+            const input = document.getElementById('comment-input'); const text = input.value.trim(); if (!text) return;
+            const token = tokens.find(t => t.id === currentTokenId); token.comments = token.comments || []; token.comments.push({ user: currentUser.address.substring(0,6)+'...', text, time: Date.now() });
+            saveState(); input.value = ''; renderCommentsBar(token); showToast('Comment posted!');
+        }
+        
+        let createImageData = null;
+        function handleCreateImage(e) { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = ev => { createImageData = ev.target.result; document.getElementById('create-image-placeholder').classList.add('hidden'); document.getElementById('create-image-preview').classList.remove('hidden'); document.getElementById('create-preview-img').src = createImageData; }; reader.readAsDataURL(file); }
+        function generateFunnyDescription() { const descs = ["The most based meme on TON. Community first, always.", "This frog is different. This frog is TON.", "Ape in or stay poor. Your choice.", "The only meme coin that actually delivers on TON.", "From the creators of the original. Now with 10x more memes.", "Not financial advice. Just pure vibes and rocket emojis."]; document.getElementById('create-desc').value = descs[Math.floor(Math.random()*descs.length)]; }
+        
+        function showCreateModal() { if (!currentUser) { showToast('Connect wallet to launch', 'error'); return; } document.getElementById('create-modal').classList.remove('hidden'); document.getElementById('create-modal').classList.add('flex'); createImageData = null; document.getElementById('create-image-placeholder').classList.remove('hidden'); document.getElementById('create-image-preview').classList.add('hidden'); document.getElementById('create-name').value = ''; document.getElementById('create-ticker').value = ''; document.getElementById('create-desc').value = ''; document.getElementById('create-initial').value = '1.5'; }
+        function closeCreateModal() { document.getElementById('create-modal').classList.add('hidden'); document.getElementById('create-modal').classList.remove('flex'); }
+        
+        function launchToken() {
+            const name = document.getElementById('create-name').value.trim() || 'MemeCoin'; const ticker = document.getElementById('create-ticker').value.trim() || 'MEME'; const desc = document.getElementById('create-desc').value.trim() || 'A new legendary meme coin on TON.'; const initial = parseFloat(document.getElementById('create-initial').value) || 0;
+            const btn = document.getElementById('launch-btn'); btn.disabled = true; btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Deploying Jetton...`;
+            setTimeout(() => {
+                const newToken = { id: Date.now(), name, ticker: ticker.toUpperCase(), desc, image: createImageData || `https://picsum.photos/id/${Math.floor(Math.random()*200)+10}/512/512`, creator: currentUser.address, createdAt: Date.now(), sold: 0, raised: 0, comments: [], activity: [], graduated: false, holders: 1 };
+                tokens.unshift(newToken);
+                if (initial > 0 && currentUser) { const received = calculateTokensForTon(initial, 0); newToken.sold += received; newToken.raised += initial; currentUser.balance -= initial; currentUser.holdings[newToken.id] = received; newToken.activity.push({ type: 'buy', user: currentUser.address.substring(0,6)+'...', amountTON: initial, amountTokens: received, time: Date.now() }); }
+                updateTokenMetrics(newToken); saveState(); closeCreateModal(); launchConfetti(); showToast(`🚀 ${ticker} launched successfully on TON!`, 'success');
+                setTimeout(() => { renderTokens(); openTokenModal(newToken.id); }, 900);
+                btn.disabled = false; btn.innerHTML = `<i class="fa-solid fa-rocket"></i> <span>LAUNCH ON TON</span>`;
+            }, 1750);
+        }
+        
+        function showView(view) { document.getElementById('home-view').classList.toggle('hidden', view !== 'home'); document.getElementById('portfolio-view').classList.toggle('hidden', view !== 'portfolio'); if (view === 'portfolio') renderPortfolio(); else renderTokens(); }
+        
+        function renderPortfolio() {
+            const grid = document.getElementById('portfolio-grid'); const totalEl = document.getElementById('portfolio-total'); grid.innerHTML = '';
+            if (!currentUser) { grid.innerHTML = `<div class="col-span-full text-center py-20"><i class="fa-solid fa-wallet text-6xl text-white/20 mb-6"></i><div class="text-3xl font-semibold">Connect your TON wallet</div><button onclick="showWalletModal()" class="mt-6 px-8 py-3 ton-gradient rounded-2xl font-bold">Connect Wallet</button></div>`; totalEl.innerHTML = '0.00'; return; }
+            let total = currentUser.balance; const keys = Object.keys(currentUser.holdings || {});
+            if (keys.length === 0) { grid.innerHTML = `<div class="col-span-full text-center py-16"><div class="text-2xl font-semibold">No positions yet</div><p class="text-white/50 mt-2">Buy some tokens on the bonding curve to get started.</p></div>`; totalEl.innerHTML = currentUser.balance.toFixed(2); return; }
+            keys.forEach(key => { const token = tokens.find(t => t.id == key); if (!token) return; updateTokenMetrics(token); const amount = currentUser.holdings[key]; const value = amount * token.currentPrice; total += value;
+                const card = document.createElement('div'); card.className = `glass border border-white/10 rounded-3xl p-5 flex gap-4 pump-card`; card.innerHTML = `<div class="w-14 h-14 flex-shrink-0 rounded-2xl overflow-hidden border border-white/10"><img src="${token.image}" class="w-full h-full object-cover"></div><div class="flex-1 min-w-0"><div class="flex justify-between"><div><div class="font-bold text-xl">${token.name}</div><div class="font-mono text-xs text-white/50">$${token.ticker}</div></div><div class="text-right"><div class="font-bold tabular-nums">${value.toFixed(2)}</div><div class="text-xs text-emerald-400">TON</div></div></div><div class="mt-5 flex items-center justify-between text-xs"><div><span class="text-white/50">You own</span> <span class="font-medium">${(amount/1000000).toFixed(2)}M</span></div><div class="flex gap-x-2"><button onclick="quickSellPortfolio(${token.id})" class="px-4 py-1 text-xs border border-red-500/30 text-red-400 hover:bg-red-500/10 rounded-2xl">Sell 50%</button><button onclick="openTokenModal(${token.id}); showView('home')" class="px-4 py-1 text-xs bg-white/5 hover:bg-white/10 rounded-2xl">Trade</button></div></div></div>`; grid.appendChild(card);
+            }); totalEl.innerHTML = total.toFixed(2);
+        }
+        
+        function quickSellPortfolio(id) { if (!currentUser) return; const token = tokens.find(t => t.id == id); if (!token) return; const owned = currentUser.holdings[id]; const sellAmt = Math.floor(owned * 0.5); const received = calculateTonForTokens(sellAmt, token.sold); token.sold -= sellAmt; currentUser.balance += received; currentUser.holdings[id] -= sellAmt; if (currentUser.holdings[id] < 500) delete currentUser.holdings[id]; updateTokenMetrics(token); saveState(); showToast(`Sold half your ${token.ticker} for ${received.toFixed(2)} TON`); renderPortfolio(); updateWalletUI(); }
+        
+        function showLeaderboard() {
+            const modal = document.createElement('div'); modal.className = `fixed inset-0 bg-black/90 z-[130] flex items-center justify-center p-4`;
+            modal.innerHTML = `<div class="glass border border-white/10 rounded-3xl w-full max-w-2xl p-8 max-h-[85vh] overflow-auto"><div class="flex justify-between mb-6"><div class="font-black text-3xl">Leaderboard</div><div onclick="this.closest('.fixed').remove()" class="text-4xl cursor-pointer">×</div></div><div class="space-y-2">${tokens.sort((a,b) => b.marketCap - a.marketCap).slice(0,8).map((t,i) => `<div onclick="openTokenModal(${t.id}); this.closest('.fixed').remove()" class="flex items-center justify-between p-4 hover:bg-white/5 rounded-2xl cursor-pointer"><div class="flex items-center gap-x-4"><div class="w-8 text-center font-mono text-white/50">#${i+1}</div><img src="${t.image}" class="w-9 h-9 rounded-xl object-cover"><div><div class="font-semibold">${t.name}</div><div class="text-xs text-white/50">$${t.ticker}</div></div></div><div class="text-right"><div class="font-bold tabular-nums">${(t.marketCap/1000).toFixed(1)}k TON</div><div class="text-xs text-emerald-400">${t.progress.toFixed(0)}% progress</div></div></div>`).join('')}</div></div>`;
+            document.body.appendChild(modal);
+        }
+        
+        function showAchievements() {
+            const modal = document.createElement('div'); modal.className = `fixed inset-0 bg-black/90 z-[130] flex items-center justify-center p-4`;
+            const achievements = [{ icon: 'fa-rocket', name: 'First Launch', desc: 'Launched your first coin', unlocked: true }, { icon: 'fa-chart-line', name: '10x Buyer', desc: 'Bought over 10 different tokens', unlocked: currentUser && Object.keys(currentUser.holdings||{}).length >= 3 }, { icon: 'fa-crown', name: 'King Slayer', desc: 'Owned the King of the Hill', unlocked: false }, { icon: 'fa-graduation-cap', name: 'Graduate', desc: 'Had a token reach DEX', unlocked: tokens.some(t => t.graduated && currentUser?.holdings[t.id]) }];
+            modal.innerHTML = `<div class="glass border border-white/10 rounded-3xl w-full max-w-md p-8"><div class="flex justify-between mb-6"><div><div class="font-black text-3xl">Achievements</div><div class="text-white/50 text-sm">Unlock by trading & launching</div></div><div onclick="this.closest('.fixed').remove()" class="text-4xl cursor-pointer">×</div></div><div class="space-y-3">${achievements.map(a => `<div class="flex gap-4 p-4 rounded-2xl ${a.unlocked ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-white/5 border border-white/10 opacity-60'}"><div class="w-12 h-12 flex-shrink-0 ${a.unlocked ? 'text-emerald-400' : 'text-white/30'} flex items-center justify-center"><i class="fa-solid ${a.icon} text-3xl"></i></div><div><div class="font-semibold">${a.name}</div><div class="text-xs text-white/50">${a.desc}</div>${a.unlocked ? '<div class="text-emerald-400 text-xs mt-1">✓ Unlocked</div>' : ''}</div></div>`).join('')}</div></div>`;
+            document.body.appendChild(modal);
+        }
+        
+        function addGlobalActivity(token, type, tonAmount, tokenAmount) { globalActivity.unshift({ token: token.ticker, type, tonAmount, tokenAmount, time: Date.now(), user: currentUser ? currentUser.address.substring(0,6) + '...' : 'anon' }); if (globalActivity.length > 12) globalActivity.pop(); renderGlobalActivity(); }
+        function renderGlobalActivity() { const container = document.getElementById('global-activity'); container.innerHTML = ''; if (globalActivity.length === 0) { container.innerHTML = `<div class="text-xs text-white/40 py-4 text-center">No live trades yet</div>`; return; } globalActivity.slice(0,7).forEach(act => { const div = document.createElement('div'); div.className = `activity-row flex items-center justify-between text-xs py-1.5 px-2 rounded-xl ${act.type === 'buy' ? 'text-emerald-400' : 'text-red-400'}`; div.innerHTML = `<div class="flex items-center gap-x-2"><span class="font-mono">${act.user}</span><span class="text-white/60">${act.type}</span><span class="font-semibold">${act.token}</span></div><div class="font-mono text-[10px]">${act.tonAmount} TON</div>`; container.appendChild(div); }); }
+        
+        function startLiveActivity() {
+            setInterval(() => {
+                if (tokens.length === 0 || document.hidden) return;
+                const randomToken = tokens[Math.floor(Math.random() * tokens.length)]; if (randomToken.graduated) return;
+                const fakeBuy = (Math.random() * 3 + 0.8).toFixed(1); const received = calculateTokensForTon(parseFloat(fakeBuy), randomToken.sold);
+                randomToken.sold += received; randomToken.raised += parseFloat(fakeBuy); randomToken.holders += Math.floor(Math.random() * 3) + 1; updateTokenMetrics(randomToken);
+                globalActivity.unshift({ token: randomToken.ticker, type: 'buy', tonAmount: fakeBuy, tokenAmount: received, time: Date.now(), user: 'UQ' + Math.random().toString(36).substring(2,7) + '...' }); if (globalActivity.length > 12) globalActivity.pop();
+                renderGlobalActivity(); if (Math.random() > 0.6 && !document.getElementById('home-view').classList.contains('hidden')) renderTokens();
+            }, 18500);
+        }
+        
+        function copyContractAddress() { if (!currentTokenId) return; const token = tokens.find(t => t.id === currentTokenId); const fakeAddr = 'EQ' + token.ticker + Math.random().toString(36).substring(2,12).toUpperCase(); navigator.clipboard.writeText(fakeAddr); showToast('Contract address copied (demo)'); }
+        function shareToX() { if (!currentTokenId) return; const token = tokens.find(t => t.id === currentTokenId); const text = encodeURIComponent(`Just aped into $${token.ticker} on pump.ton! 🚀 https://pump.ton/token/${token.ticker}`); window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank'); }
+        
+        function showToast(msg, type = 'success') { const container = document.getElementById('toast-container'); const toast = document.createElement('div'); toast.className = `px-6 py-3.5 rounded-2xl shadow-2xl flex items-center gap-x-3 text-sm border max-w-xs ${type === 'success' ? 'bg-emerald-950 border-emerald-600 text-emerald-300' : 'bg-red-950 border-red-600 text-red-300'}`; toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} text-lg"></i> <span>${msg}</span>`; container.appendChild(toast); setTimeout(() => { toast.style.transition = 'all .35s ease'; toast.style.opacity = '0'; toast.style.transform = 'translateY(15px)'; setTimeout(() => toast.remove(), 300); }, 2900); }
+        
+        function updateHeroStats() { const vol = document.getElementById('hero-volume'); const launched = document.getElementById('hero-launched'); const grad = document.getElementById('hero-graduated'); setInterval(() => { vol.innerHTML = (parseFloat(vol.innerHTML.replace('k','')) + (Math.random()*0.8 + 0.3)).toFixed(1) + 'k'; launched.innerHTML = (parseInt(launched.innerHTML.replace(',','')) + Math.floor(Math.random()*4) + 1).toLocaleString(); if (Math.random() > 0.7) grad.innerHTML = (parseInt(grad.innerHTML.replace(',','')) + 1).toLocaleString(); }, 24000); }
+        
+        function initKeyboard() {
+            document.addEventListener('keydown', e => { if (e.key === '/' && document.activeElement.tagName === 'BODY') { e.preventDefault(); document.getElementById('search-input').focus(); } if (e.key.toLowerCase() === '?' && e.shiftKey) { e.preventDefault(); showAchievements(); } });
+            let seq = ''; document.addEventListener('keydown', e => { seq += e.key; if (seq.length > 12) seq = seq.slice(-12); if (seq.includes('pumpit')) { launchConfetti(); tokens.forEach(t => { t.raised *= 1.15; updateTokenMetrics(t); }); renderTokens(); showToast('🎉 All tokens pumped 15%!', 'success'); seq = ''; } });
+        }
+        
+        function initialize() {
+            loadState(); renderTokens(); updateWalletUI(); updateHeroStats(); initKeyboard(); startLiveActivity();
+            setTimeout(() => { if (tokens.length > 3) { globalActivity = [{ token: tokens[0].ticker, type: 'buy', tonAmount: '3.2', tokenAmount: 12400000, time: Date.now()-120000, user: 'UQTop...' }, { token: tokens[3].ticker, type: 'buy', tonAmount: '1.8', tokenAmount: 8700000, time: Date.now()-45000, user: 'UQApe...' }]; renderGlobalActivity(); } }, 800);
+            if (Math.random() > 0.5) document.getElementById('achievement-dot').classList.remove('hidden');
+            console.log('%c[pump.ton v2] x1000 upgraded prototype ready.', 'color:#555');
+        }
+        window.onload = initialize;
+    </script>
+</body>
+</html>
